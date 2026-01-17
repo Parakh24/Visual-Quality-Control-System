@@ -1,4 +1,3 @@
 # Visual-Quality-Control-System
 ## Dataset
-The dataset used is the DeepPCB dataset.
-Dataset link: https://github.com/tangsanli5201/DeepPCB
+Dataset link: https://drive.google.com/drive/folders/1KA5_0-u9NVzR5i_zlL2UOhSkkcrt2-5n?usp=sharing
