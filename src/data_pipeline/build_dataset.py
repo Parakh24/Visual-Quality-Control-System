@@ -37,7 +37,7 @@ def create_dirs():
 # STEP 1: CLEAN DATA
 # -------------------------------
 def clean_images():
-    print("🔹 Cleaning raw images...")
+    print(" Cleaning raw images...")
 
     for cls in CLASSES:
         src_dir = f"{RAW_DIR}/{cls}"
@@ -71,7 +71,7 @@ def clean_images():
 # STEP 2: RESIZE + NORMALIZE
 # -------------------------------
 def resize_and_normalize():
-    print("🔹 Resizing and normalizing images...")
+    print(" Resizing and normalizing images...")
 
     for cls in CLASSES:
         src_dir = f"{CLEANED_DIR}/{cls}"
