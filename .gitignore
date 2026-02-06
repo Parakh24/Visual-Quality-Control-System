@@ -1,0 +1,5 @@
+# Ignore PCB dataset images
+data/raw/good/*.jpg
+data/raw/defective/*.jpg
+models/trained/
+tf_env/
