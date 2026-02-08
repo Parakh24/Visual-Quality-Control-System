@@ -1,121 +1,86 @@
 import os
 import json
 import tensorflow as tf
-from keras import layers, models, callbacks
-from keras.utils import image_dataset_from_directory
 
-# -------------------------------
-# CONFIG
-# -------------------------------
-DATA_DIR = "data/splits"
-TRAIN_DIR = os.path.join(DATA_DIR, "train")
-VAL_DIR = os.path.join(DATA_DIR, "val")
+from ..common import config
 
-IMG_SIZE = (224, 224)
-BATCH_SIZE = 32
-EPOCHS = 10
 
-MODEL_DIR = "models/trained"
-os.makedirs(MODEL_DIR, exist_ok=True)
+try:
+    from ..common.logger import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
-# -------------------------------
-# LOAD DATA
-# -------------------------------
-train_ds = image_dataset_from_directory(
-    TRAIN_DIR,
-    image_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    label_mode="binary"
-)
+from ..modeling.model_factory import build_model
+from ..data_pipeline.generators import create_generators
+from ..training.callbacks import get_callbacks
 
-val_ds = image_dataset_from_directory(
-    VAL_DIR,
-    image_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    label_mode="binary"
-)
 
-# Normalize images to [0,1]
-normalization_layer = layers.Rescaling(1.0 / 255)
+def save_history(history, path):
+    history_dict = history.history
+    with open(path, "w") as f:
+        json.dump(history_dict, f, indent=4)
+    logger.info(f"Training history saved to: {path}")
 
-train_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
-val_ds = val_ds.map(lambda x, y: (normalization_layer(x), y))
 
-# Prefetch for performance
-AUTOTUNE = tf.data.AUTOTUNE
-train_ds = train_ds.prefetch(buffer_size=AUTOTUNE)
-val_ds = val_ds.prefetch(buffer_size=AUTOTUNE)
+def main():
+    logger.info("Starting training pipeline...")
 
-# -------------------------------
-# BUILD MODEL (Baseline CNN)
-# -------------------------------
-def build_model(input_shape=(224, 224, 3)):
-    model = models.Sequential([
-        layers.Conv2D(32, (3, 3), activation="relu", input_shape=input_shape),
-        layers.MaxPooling2D(),
+    # Check GPU availability
+    gpus = tf.config.list_physical_devices("GPU")
+    if gpus:
+        logger.info(f"GPU detected: {gpus}")
+    else:
+        logger.warning("No GPU detected. Training will run on CPU.")
 
-        layers.Conv2D(64, (3, 3), activation="relu"),
-        layers.MaxPooling2D(),
-
-        layers.Conv2D(128, (3, 3), activation="relu"),
-        layers.MaxPooling2D(),
-
-        layers.Flatten(),
-        layers.Dense(128, activation="relu"),
-        layers.Dropout(0.5),
-        layers.Dense(1, activation="sigmoid")  # Binary classification
-    ])
-
-    model.compile(
-        optimizer="adam",
-        loss="binary_crossentropy",
-        metrics=["accuracy"]
+    # Load data generators
+    logger.info("Loading data generators...")
+    train_ds, val_ds, _ = create_generators(
+        data_dir=config.SPLITS_DIR,
+        image_size=config.IMG_SIZE,
+        batch_size=config.BATCH_SIZE,
+        label_mode="binary" if config.NUM_CLASSES == 2 else "categorical",
+        seed=config.SEED
     )
 
-    return model
+    # Build model
+    logger.info(f"Building model with base: {config.BASE_MODEL}")
+    model = build_model(
+        base_model_name=config.BASE_MODEL,
+        input_shape=config.INPUT_SHAPE,
+        num_classes=config.NUM_CLASSES,
+        learning_rate=config.LEARNING_RATE,
+        freeze_layers=config.FREEZE_LAYERS
+    )
 
-model = build_model()
-model.summary()
+    model.summary(print_fn=logger.info)
 
-# -------------------------------
-# CALLBACKS
-# -------------------------------
-checkpoint_cb = callbacks.ModelCheckpoint(
-    filepath=os.path.join(MODEL_DIR, "best_model.keras"),
-    monitor="val_loss",
-    save_best_only=True,
-    verbose=1
-)
+    
+    logger.info("Setting up callbacks...")
+    callbacks = get_callbacks(config.BASE_MODEL)
 
-earlystop_cb = callbacks.EarlyStopping(
-    monitor="val_loss",
-    patience=3,
-    restore_best_weights=True
-)
+    # Train model
+    logger.info("Starting training...")
+    history = model.fit(
+        train_ds,
+        validation_data=val_ds,
+        epochs=config.EPOCHS,
+        callbacks=callbacks
+    )
 
-callback_list = [checkpoint_cb, earlystop_cb] 
+    # Save final model
+    final_model_path = os.path.join(config.TRAINED_MODELS_DIR, "vision_spec_qc.h5")
+    model.save(final_model_path)
+    logger.info(f"Final model saved to: {final_model_path}")
 
-# -------------------------------
-# TRAIN
-# -------------------------------
-history = model.fit(
-    train_ds,
-    validation_data=val_ds,
-    epochs=EPOCHS,
-    callbacks=callback_list
-)
+    # Save training history
+    history_path = os.path.join(config.TRAINED_MODELS_DIR, "history.json")
+    save_history(history, history_path)
 
-# -------------------------------
-# SAVE FINAL MODEL
-# -------------------------------
-model.save(os.path.join(MODEL_DIR, "vision_spec_qc.keras"))
+    logger.info("Training completed successfully.")
 
-# -------------------------------
-# SAVE HISTORY (FOR error_analysis.py)
-# -------------------------------
-history_path = os.path.join(MODEL_DIR, "history.json")
-with open(history_path, "w") as f:
-    json.dump(history.history, f)
 
-print(f"Training complete. Model and history saved to {MODEL_DIR}")
-
+if __name__ == "__main__":
+    main()

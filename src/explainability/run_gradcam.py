@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.applications import MobileNetV2
+from keras.applications import MobileNetV2
 from src.explainability.gradcam import generate_gradcam, load_and_preprocess_image
 
 # Pretrained model (NO local file needed)
