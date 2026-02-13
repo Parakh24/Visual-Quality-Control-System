@@ -2,10 +2,10 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-# 🔹 ADD THIS IMPORT
+# ADD THIS IMPORT
 from tensorflow.keras.applications import MobileNetV2
 
-# 🔹 Grad-CAM imports
+# Grad-CAM imports
 from src.explainability.gradcam import generate_gradcam
 from src.explainability.visualize import overlay_heatmap
 
@@ -14,10 +14,10 @@ from src.explainability.visualize import overlay_heatmap
 # MODEL LOADING (HERE)
 # =========================
 
-# 🔹 USE PRETRAINED MODEL (Week-3 & Week-4)
+# USE PRETRAINED MODEL (Week-3 & Week-4)
 model = MobileNetV2(weights="imagenet")
 
-# 🔹 Last convolutional layer for Grad-CAM
+# Last convolutional layer for Grad-CAM
 LAST_CONV_LAYER = "Conv_1"
 
 
@@ -39,10 +39,10 @@ def run_live_inference():
     cap = cv2.VideoCapture(0)  # Webcam
 
     if not cap.isOpened():
-        print("❌ Cannot access camera")
+        print("Cannot access camera")
         return
 
-    print("✅ Camera started. Press 'q' to quit.")
+    print("Camera started. Press 'q' to quit.")
 
     while True:
         ret, frame = cap.read()
@@ -51,11 +51,11 @@ def run_live_inference():
 
         input_tensor = preprocess_frame(frame)
 
-        # 🔹 Prediction
+        # Prediction
         preds = model.predict(input_tensor, verbose=0)
         pred_class = np.argmax(preds)
 
-        # 🔹 Grad-CAM
+        # Grad-CAM
         heatmap = generate_gradcam(
             model,
             input_tensor,
@@ -63,10 +63,10 @@ def run_live_inference():
             class_index=pred_class
         )
 
-        # 🔹 Overlay heatmap
+        # Overlay heatmap
         overlay = overlay_heatmap(frame, heatmap)
 
-        # 🔹 Display label
+        # Display label
         label = f"Predicted Class: {pred_class}"
         cv2.putText(
             overlay,
