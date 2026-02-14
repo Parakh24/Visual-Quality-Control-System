@@ -1,9 +1,7 @@
 import cv2
 import numpy as np
-import tensorflow as tf
-
 # ADD THIS IMPORT
-from tensorflow.keras.applications import MobileNetV2
+from keras.applications import MobileNetV2
 
 # Grad-CAM imports
 from src.explainability.gradcam import generate_gradcam
