@@ -59,5 +59,5 @@ def evaluate_model(model_path):
 
 
 if __name__ == "__main__":
-    model_path = os.path.join(config.TRAINED_MODELS_DIR, "vision_spec_qc.keras")
+    model_path = os.path.join(config.TRAINED_MODELS_DIR, "vision_spec_qc.h5")
     evaluate_model(model_path)

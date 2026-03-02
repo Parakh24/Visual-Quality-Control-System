@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 # ---------------- CONFIG ----------------
-MODEL_PATH = "models/trained/vision_spec_qc.keras"   # or .tflite
+MODEL_PATH = "models/trained/vision_spec_qc.h5"   # or .tflite
 TEST_DIR = "data/splits/test"
 IMG_SIZE = (224, 224)
 

@@ -1,0 +1,13 @@
+python -m src.training.train
+python src/common/config.py
+python src/common/logger.py
+python src/data_pipeline/build_dataset.py
+python src/data_pipeline/generators.py
+python src/evaluation/end_to_end.py   (error)
+python src/evaluation/error_analysis.py (error)
+python -m src.evaluation.evaluate   (error)
+python src/evaluation/learning_curves.py
+python src/explainability/gradcam.py
+python -m src.explainability.run_gradcam (error)
+python -m uvicorn src.serving.api:app --reload
+http://127.0.0.1:8000/docs
